@@ -1,0 +1,34 @@
+// ============================
+// Slave Node (Node ID = 2 or 3)
+// ============================
+#include "TDMCommon.h"
+
+#define NODE_ID 0x02  // or 0x03 depending on which device this is
+// uint8_t currentTarget = 0;
+// String fileToSend = "";
+
+void setup() {
+  setupCommon(NODE_ID);
+}
+
+void loop() {
+  processCommand();  // Handle SEND <id> <file> on PC side
+
+  if (RS485.available() >= 2) {
+    uint8_t cmd = RS485.read();
+    uint8_t id  = RS485.read();
+    if (cmd == 0xF0 && id == NODE_ID) {
+      Serial.println("Polled by master.");
+
+      if (fileToSend != "" && currentTarget != 0) {
+        sendFile(fileToSend.c_str(), currentTarget);
+        fileToSend = "";
+        currentTarget = 0;
+      } else {
+        Serial.println("Nothing to send.");
+      }
+    } else if (cmd == REQ_SEND && id == NODE_ID) {
+      receiveFile();  // This node is being sent a file
+    }
+  }
+}
